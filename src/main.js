@@ -12,7 +12,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import VueRouter from 'vue-router'
 //导入axios
 import axios from 'axios'
-// 导入格式化时间插件	
+// 导入格式化时间插件    
 import moment from 'moment'
 // 导入iview框架
 import iView from 'iview';
@@ -24,7 +24,15 @@ Vue.use(iView)
 Vue.use(ElementUI);
 // 给Vue注册VueRouter
 Vue.use(VueRouter)
+    // 把axios挂在到Vue的原型中,让所有的vue实例都可以调用axios
 Vue.prototype.$axios = axios
+    // 设置axios的默认公共地址
+axios.defaults.baseURL = 'http://111.230.232.110:8899/';
+// 导入放大镜组件
+import ProductZoomer from 'vue-product-zoomer'
+// 注册到Vue实例
+Vue.use(ProductZoomer)
+
 
 Vue.config.productionTip = false
 import index from './components/index.vue'

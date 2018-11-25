@@ -13,7 +13,9 @@
                 <div class="wrap-box">
                     <div class="left-925">
                         <div class="goods-box clearfix">
-                            <div class="pic-box"></div>
+                            <div class="pic-box">
+                                <ProductZoomer v-if="images.normal_size.length!=0" :base-images="images" :base-zoomer-options="zoomerOptions" />
+                            </div>
                             <div class="goods-spec">
                                 <h1>{{goodsinfo.title}}</h1>
                                 <p class="subtitle">{{goodsinfo.sub_title}}}</p>
@@ -82,7 +84,7 @@
                                         </div>
                                         <div class="conn-box">
                                             <div class="editor">
-                                                <textarea ref="cContent" id="txtContent" name="txtContent" sucmsg=" " datatype="*10-1000" nullmsg="请填写评论内容！"></textarea>
+                                                <textarea v-model="textContent" id="txtContent" name="txtContent" sucmsg=" " datatype="*10-1000" nullmsg="请填写评论内容！"></textarea>
                                                 <span class="Validform_checktip"></span>
                                             </div>
                                             <div class="subcon">
@@ -106,7 +108,7 @@
                                             </div>
                                         </li>
                                     </ul>
-                                    <Page :total="totalcount" show-sizer :page-size="pageSize" :page-size-opts="[5,8,10]" placement="top" show-elevator @on-change="change" @on-page-size-change="changepage" />
+                                    <Page :current="pageIndex" :total="totalcount" show-sizer :page-size="pageSize" :page-size-opts="[5,8,10]" placement="top" show-elevator @on-change="change" @on-page-size-change="changepage" />
                                 </div>
                             </div>
                         </div>
@@ -163,7 +165,20 @@ export default {
             //所有的评论总数
             totalcount: 0,
             // 提交的需要提交的评论
-            textContent: ''
+            textContent: '',
+            images: {
+                'normal_size': // required                          
+                    []
+            },
+            zoomerOptions: {
+                'zoomFactor': 3,
+                'pane': 'pane',
+                'hoverDelay': 300,
+                'namespace': 'zoomer',
+                'move_by_click': false,
+                'scroll_items': 7,
+                'choosed_thumb_border_color': "#dd2c00"
+            }
         }
     },
     created() {
@@ -181,15 +196,23 @@ export default {
             this.artID = this.$route.query.artID
             console.log(this.artID);
             // 获取到商品详情信息
-            this.$axios.get(`http://111.230.232.110:8899/site/goods/getgoodsinfo/${this.artID}`).then(res => {
+            this.$axios.get(`site/goods/getgoodsinfo/${this.artID}`).then(res => {
                 this.goodsinfo = res.data.message.goodsinfo
                 this.hotgoodslist = res.data.message.hotgoodslist
                 this.imglist = res.data.message.imglist
+                this.images.normal_size = []
+                this.imglist.forEach(v => {
+                    this.images.normal_size.push({
+                        id: v.id,
+                        url: v.original_path
+                    })
+                })
+
             })
         },
         // 获取到用户评论的数据
         getdetail() {
-            this.$axios.get(`http://111.230.232.110:8899/site/comment/getbypage/goods/${this.artID}?pageIndex=${this.pageIndex}&pageSize=${this.pageSize}`).then(res => {
+            this.$axios.get(`site/comment/getbypage/goods/${this.artID}?pageIndex=${this.pageIndex}&pageSize=${this.pageSize}`).then(res => {
                 this.comments = res.data.message
                 this.totalcount = res.data.totalcount
             })
@@ -209,12 +232,9 @@ export default {
         },
         // 点击按钮提交评论
         submitComment() {
-            // 获取到文本域的值
-            this.textContent = this.$refs.cContent.value
-                // 设置为空
-            this.$refs.cContent.value = ''
+            // 设置为空
             if (!this.textContent.trim()) {
-                alert('还没有写评论')
+                this.$Message.warning('评论不能为空');
                 return
             }
             // this.$axios({
@@ -227,17 +247,24 @@ export default {
             //     console.log(res);
             // })
 
-            this.$axios.post(`http://111.230.232.110:8899/site/validate/comment/post/goods/${this.artID}`, {
+            this.$axios.post(`site/validate/comment/post/goods/${this.artID}`, {
                 commenttxt: this.textContent
             }).then(res => {
-                // 调用评论查询的方法
+                // 初始化页码为1
+                this.pageIndex = 1
+                    // 调用评论查询的方法
                 this.getdetail()
+                    // 成功提示
+                this.$Message.success(res.data.message);
+
             })
         }
     },
     watch: {
         $route(newVal, oldVale) {
             // 当商品的id修改后就重新调用获取商品和品论的数据
+            // 当路由发生变化后 修改图片的数组为空
+            this.images.normal_size=[]
             this.initInfo()
             this.getdetail()
         }
@@ -247,5 +274,14 @@ export default {
 <style>
 .tab-content img {
     display: block;
+}
+
+.thumb-list img {
+    width: 100px;
+    height: 100px;
+}
+
+.pic-box {
+    width: 395px;
 }
 </style>
