@@ -41,17 +41,18 @@ Vue.use(Vuex)
 // 实例一个vuex实例
 const store = new Vuex.Store({
     state: {
-        cartData: {}, //键值说明 , 商品id为这个对象的键 商品的数量为这个键的值
+        cartData: JSON.parse(window.localStorage.getItem('shenlongshop')) || { 87: 3, 90: 4 }, //键值说明 , 商品id为这个对象的键 商品的数量为这个键的值
     },
     mutations: {
         increment(state, obj) {
-            if (state.cartData[obj.goodid]!=undefined) {
+            if (state.cartData[obj.goodid] != undefined) {
                 // 累加到这个商品的个数
                 state.cartData[obj.goodid] += obj.goodNum
             } else {
-                // 手动调用Vue.set方法去为某个对象添加键值对,这个键值对的变化将会被跟踪到,会做自动同步更新到
+                // 手动调用Vue.set方法去为某个对象添加键值对,这个键值对的变化将会被跟踪到,会做自动同步更新到视图
                 Vue.set(state.cartData, obj.goodid, obj.goodNum);
-                // state.cartNum[obj.goodid] = obj.goodNum
+
+                // state.cartNum[obj.goodid] = obj.goodNum//这种添加的键值对无法同步更新到视图
             }
         }
     },
@@ -66,6 +67,9 @@ const store = new Vuex.Store({
     }
 })
 
+window.onbeforeunload = function() {
+    window.localStorage.setItem('shenlongshop', JSON.stringify(store.state.cartData))
+}
 
 Vue.config.productionTip = false
     // 导入组件
