@@ -33,24 +33,53 @@ import ProductZoomer from 'vue-product-zoomer'
 // 注册到Vue实例
 Vue.use(ProductZoomer)
 
+// 导入vuex
+import Vuex from 'vuex'
+// vuex注册到vue
+Vue.use(Vuex)
+
+// 实例一个vuex实例
+const store = new Vuex.Store({
+    state: {
+        cartData: {}, //键值说明 , 商品id为这个对象的键 商品的数量为这个键的值
+    },
+    mutations: {
+        increment(state, obj) {
+            if (state.cartData[obj.goodid]!=undefined) {
+                // 累加到这个商品的个数
+                state.cartData[obj.goodid] += obj.goodNum
+            } else {
+                // 手动调用Vue.set方法去为某个对象添加键值对,这个键值对的变化将会被跟踪到,会做自动同步更新到
+                Vue.set(state.cartData, obj.goodid, obj.goodNum);
+                // state.cartNum[obj.goodid] = obj.goodNum
+            }
+        }
+    },
+    getters: {
+        cartCount(state) {
+            let num = 0
+            for (let key in state.cartData) {
+                num += state.cartData[key]
+            }
+            return num
+        }
+    }
+})
+
 
 Vue.config.productionTip = false
+    // 导入组件
 import index from './components/index.vue'
 import detail from './components/productDatil.vue'
 import buycar from './components/buycart.vue'
 
-
-
-
+// 实例路由对象 配置路由规则
 let router = new VueRouter({
         routes: [
             { path: "/", redirect: '/index' },
             { path: "/index", component: index },
             { path: "/detail", component: detail },
             { path: "/buycar", component: buycar },
-
-
-
         ]
     })
     //简写时间
@@ -62,6 +91,10 @@ Vue.filter('detailTime', value => {
     return moment(value).format('YYYY-MM-DD hh:mm:ss')
 })
 new Vue({
+    // APP组件
     render: h => h(App),
+    // 关联路由对象
     router,
+    // 关联vuex对象
+    store
 }).$mount('#app')

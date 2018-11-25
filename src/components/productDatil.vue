@@ -53,8 +53,8 @@
                                     <dl>
                                         <dd>
                                             <div id="buyButton" class="btn-buy">
-                                                <button onclick="cartAdd(this,'/',1,'/shopping.html');" class="buy">立即购买</button>
-                                                <button onclick="cartAdd(this,'/',0,'/cart.html');" class="add">加入购物车</button>
+                                                <button class="buy">立即购买</button>
+                                                <button @click="addcart" class="add">加入购物车</button>
                                             </div>
                                         </dd>
                                     </dl>
@@ -258,13 +258,21 @@ export default {
                 this.$Message.success(res.data.message);
 
             })
+        },
+        //加入购物车
+        addcart() {
+            this.$store.commit('increment', {
+                goodid: this.artID,
+                goodNum: this.byuCount
+            })
+            
         }
     },
     watch: {
         $route(newVal, oldVale) {
             // 当商品的id修改后就重新调用获取商品和品论的数据
             // 当路由发生变化后 修改图片的数组为空
-            this.images.normal_size=[]
+            this.images.normal_size = []
             this.initInfo()
             this.getdetail()
         }
