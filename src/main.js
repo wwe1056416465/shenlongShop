@@ -43,7 +43,9 @@ const store = new Vuex.Store({
     state: {
         cartData: JSON.parse(window.localStorage.getItem('shenlongshop')) || { 87: 3, 90: 4 }, //键值说明 , 商品id为这个对象的键 商品的数量为这个键的值
     },
+    // 修改state中的数据
     mutations: {
+        // 加入购物车后修改state中的数据
         increment(state, obj) {
             if (state.cartData[obj.goodid] != undefined) {
                 // 累加到这个商品的个数
@@ -54,8 +56,18 @@ const store = new Vuex.Store({
 
                 // state.cartNum[obj.goodid] = obj.goodNum//这种添加的键值对无法同步更新到视图
             }
-        }
+        },
+        // 修改购物车中的数据
+        updatebuycount(state, obj) {
+            state.cartData = obj
+        },
+        // // 删除购物车中的数据
+        // deleteshop(state,artID){
+        //     // 使用Vue.delete 删除后会自动同步到视图
+        //     Vue.delete  state.cartData[artID]
+        // }
     },
+    // store 中的计算属性
     getters: {
         cartCount(state) {
             let num = 0
@@ -76,17 +88,50 @@ Vue.config.productionTip = false
 import index from './components/index.vue'
 import detail from './components/productDatil.vue'
 import buycar from './components/buycart.vue'
+import order from './components/order.vue'
+import login from './components/logion.vue'
 
 // 实例路由对象 配置路由规则
 let router = new VueRouter({
-        routes: [
-            { path: "/", redirect: '/index' },
-            { path: "/index", component: index },
-            { path: "/detail", component: detail },
-            { path: "/buycar", component: buycar },
-        ]
-    })
-    //简写时间
+    routes: [
+        { path: "/", redirect: '/index' },
+        { path: "/index", component: index },
+        { path: "/detail", component: detail },
+        { path: "/buycar", component: buycar },
+        { path: "/order", component: order },
+        { path: "/login", component: login },
+    ]
+})
+
+//导航守卫,路由发生变化时触发的函数
+router.beforeEach((to, from, next) => {
+    // 在路由跳转之前 触发的处理函数
+
+    if (to.fullPath == '/order') {
+        // 需要改变到的那个路径如果等于 /order 就 发送请求,判断是否有登入
+        axios.get('site/account/islogin').then(res => {
+            if (res.data.code == 'nologin') {
+                // 如果没有登入就先弹出提示框(提示框的方法是挂载到VUe的原型当中的,
+                // 在Vue中 $开头的方法都是挂载到Vue原型的第三方方法 )
+                Vue.prototype.$message({
+                    message: '请先登入!!!',
+                    type: 'warning'
+                });
+                // 这里是通过代码的方式进行路由跳转,这个过程的术语叫 编程导航
+                router.push('/login')
+            } else {
+                // 走到这里就说明之前有登入过,这里就不做任何处理,就根据点击的路由去处理
+            }
+        })
+    } else {
+        // 如果要跳转的路由不等于 order则不做处理
+    }
+    // 必须要调用next方法来结束这个生命周期函数,否则无法进入下一个钩子
+    next() // 进行管道中的下一个钩子。如果全部钩子执行完了，则导航的状态就是 confirmed (确认的)。
+})
+
+
+//简写时间
 Vue.filter('timemanage', value => {
         return moment(value).format('YYYY-MM-DD')
     })

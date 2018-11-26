@@ -194,7 +194,7 @@ export default {
             this.byuCount = 1
                 // 保存数据
             this.artID = this.$route.query.artID
-            console.log(this.artID);
+          
             // 获取到商品详情信息
             this.$axios.get(`site/goods/getgoodsinfo/${this.artID}`).then(res => {
                 this.goodsinfo = res.data.message.goodsinfo
@@ -261,11 +261,19 @@ export default {
         },
         //加入购物车
         addcart() {
+            // 把数据提交到状态管理 叫提交载荷
             this.$store.commit('increment', {
-                goodid: this.artID,
-                goodNum: this.byuCount
-            })
-            
+                    goodid: this.artID,
+                    goodNum: this.byuCount
+                })
+                // 添加成功后就提示通过
+            this.$notify({
+                title: 'success',
+                message: '二货成功加入购物车',
+                type: 'success',
+                duration: 1000
+            });
+
         }
     },
     watch: {
