@@ -58,13 +58,13 @@
                         <ul class="side-img-list">
                             <li v-for="(item,index) in toplist" :key="item.id">
                                 <div class="img-box">
-                                <router-link to="">
+                                <router-link :to="'/detail?artID='+item.id">
                                     <label>{{++index}}</label>
                                     <img :src="item.img_url">
                                     </router-link>
                                 </div>
                                 <div class="txt-box">
-                                    <router-link to="">{{item.title}}  </router-link>
+                                    <router-link :to="'/detail?artID='+item.id">{{item.title}}  </router-link>
                                     <span>{{item.add_time|timemanage}}</span>
                                 </div>
                             </li>
@@ -115,14 +115,18 @@ export default {
     name: 'index',
     data() {
         return {
+            // 左上的分类商品数组
             catelist: [],
+            // 轮播图的图片数组
             sliderlist: [],
+            // 右上的商品信息
             toplist: [],
+            // 主体的商品列表数组
             groupList: [],
         }
     },
     created() {
-        // 获取到底部的数据
+        // 获取到主体商品列表所有的数据
         this.$axios.get('site/goods/getgoodsgroup').then(res => {
             this.groupList = res.data.message
         })

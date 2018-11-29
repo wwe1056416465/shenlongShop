@@ -104,7 +104,7 @@
                             <router-link  to="/index">
                                 <button class="button">继续购物</button>
                             </router-link>
-                            <router-link  to="/order">
+                            <router-link :to="'/order/'+selectId">
                             <button class="submit">立即结算</button>
                             </router-link>
                         </div>
@@ -146,12 +146,25 @@ export default {
                 }
             })
             return price
-        }
+        },
+        // 选中的商品的id
+        selectId(){
+            let ids=''
+            this.goodslist.some(v=>{
+                if(v.isSelect==true){
+                    ids+=v.id
+                    ids+=','
+                }
+            })
+            ids=ids.substring(0,ids.length-1)
+            return ids
+        },
     },
 
     watch: {
         goodslist: {
             handler: function(val, oldVal) {
+                console.log('12');
                 // 深度监听,可以监听到复杂数据类型中的嵌套数据的变化
                 // 监听到数据发生变化时 需要去修改状态管理的state属性
                 let obj = {}

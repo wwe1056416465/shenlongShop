@@ -14,6 +14,7 @@
                     <div class="left-925">
                         <div class="goods-box clearfix">
                             <div class="pic-box">
+                                <!--因为每次点击都会重新的对放大镜数组重新赋值, 所以这个地方通过数组的长度来增删html结构 保证每次绑定属性拿到的都是最新的商品图片 -->
                                 <ProductZoomer v-if="images.normal_size.length!=0" :base-images="images" :base-zoomer-options="zoomerOptions" />
                             </div>
                             <div class="goods-spec">
@@ -108,6 +109,8 @@
                                             </div>
                                         </li>
                                     </ul>
+                                    <!-- iview框架提供的计数器 里面使用的 current:当前显示的高亮页码 和data中的页码同步  total:页码总数  page-size:页容量 page-size-opts:可选的页容量(通过属性绑定,值会被当做js代码来执行)
+                                     placement:显示页容量选项向上伸展  两个事件,1 页码改变事件,有返回值为点击的页码  2 页容量改变事件 页容量发生改变触发的函数返回选中的页容量-->
                                     <Page :current="pageIndex" :total="totalcount" show-sizer :page-size="pageSize" :page-size-opts="[5,8,10]" placement="top" show-elevator @on-change="change" @on-page-size-change="changepage" />
                                 </div>
                             </div>
@@ -167,7 +170,7 @@ export default {
             // 提交的需要提交的评论
             textContent: '',
             images: {
-                'normal_size': // required                          
+                'normal_size': // 存放放大图片的数组                         
                     []
             },
             zoomerOptions: {
@@ -184,55 +187,64 @@ export default {
     created() {
         // 获取到商品信息
         this.initInfo()
-            // 获取到用户评论数据
-        this.getdetail()
+            //     // 获取到用户评论数据
+            // this.getdetail()
     },
     methods: {
         // 获取到商品的信息
         initInfo() {
             // 初始化购买数量
             this.byuCount = 1
-                // 保存数据
+                // 接收路由的参数
             this.artID = this.$route.query.artID
-          
-            // 获取到商品详情信息
+                // 根据当前的商品id获取到商品详情信息
             this.$axios.get(`site/goods/getgoodsinfo/${this.artID}`).then(res => {
                 this.goodsinfo = res.data.message.goodsinfo
                 this.hotgoodslist = res.data.message.hotgoodslist
                 this.imglist = res.data.message.imglist
+                    //获取到商品详情成功后再获取用户评论
+                    // 获取到用户评论数据
+                this.getdetail()
+                    // 为了保持存放 放大镜效果的图片 的数组每次保存的都是当前商品的图片 先数组中的旧内容 
                 this.images.normal_size = []
-                this.imglist.forEach(v => {
+                    // 遍历商品图片数组
+                this.imglist.forEach((v,index) => {
+                    // 把图片的id和图片地址push到用来存 需要放大镜效果图片 的数组中(这个数组需要这两的数据)
                     this.images.normal_size.push({
                         id: v.id,
                         url: v.original_path
                     })
+                   
                 })
 
             })
         },
         // 获取到用户评论的数据
         getdetail() {
+            // 通过当前的商品id 和data中的页码和页容量获取到商品的评论数
             this.$axios.get(`site/comment/getbypage/goods/${this.artID}?pageIndex=${this.pageIndex}&pageSize=${this.pageSize}`).then(res => {
-                this.comments = res.data.message
-                this.totalcount = res.data.totalcount
+                this.comments = res.data.message //当次请求回来的评论数据
+                this.totalcount = res.data.totalcount //评论的总条数
             })
         },
         // 点击分页的事件
         change(page) {
-            // 修改数据中的页码
+            // 这个事件是 iview 提供的分页的 on-change 事件 有一个参数,是点击后返回来的当前点击的页码
+            // 修改当前data中的页码
             this.pageIndex = page;
-            // 从新调用获取评论数据的方法
+            //使用修改后的页码重新调用获取评论数据的方法  获取到此页码的评论数据
             this.getdetail()
         },
         changepage(pageSize) {
-            // 修改页容量
+            // 这个是 iview 框架提供的 on-page-size-change 事件, 有一个参数,是点击改变页容量后返回的页容量
+            // 修改当前data页容量
             this.pageSize = pageSize;
-            // 从新调用获取评论数据的方法
+            //使用修改后的页容量从新调用获取评论数据的方法
             this.getdetail()
         },
         // 点击按钮提交评论
         submitComment() {
-            // 设置为空
+            // 非空判断
             if (!this.textContent.trim()) {
                 this.$Message.warning('评论不能为空');
                 return
@@ -246,13 +258,13 @@ export default {
             // }).then(res=>{
             //     console.log(res);
             // })
-
+            // 有输入内容,发送请求 提交评论
             this.$axios.post(`site/validate/comment/post/goods/${this.artID}`, {
                 commenttxt: this.textContent
             }).then(res => {
-                // 初始化页码为1
+                // 初始化页码为1 
                 this.pageIndex = 1
-                    // 调用评论查询的方法
+                    //使用初始化后页码调用评论查询的方法
                 this.getdetail()
                     // 成功提示
                 this.$Message.success(res.data.message);
@@ -261,12 +273,17 @@ export default {
         },
         //加入购物车
         addcart() {
-            // 把数据提交到状态管理 叫提交载荷
+
+            // 把数据提交到状态管理 叫提交载荷 
+            // 当前组件中详情商品的id通过路由参数从index组件传递过来,需要购买商品数量也是在这个地方决定
+            // 因为商品详情组件中的 商品id和 商品数量 这两个数据在其他的组件中也要使用到
+            // 所以可以把不同商品的id 和数量通过 commit(提交载荷) 提交到状态管理仓库(vuex)中去 
+            // 这样其他组件就可以通过vuex提供的通道方便的获取到这个组件中的值
             this.$store.commit('increment', {
-                    goodid: this.artID,
-                    goodNum: this.byuCount
+                    goodid: this.artID, // 在当前详情页下,路由中的参数就是商品的id 因为之前做过处理,data中的artID也是商品的id
+                    goodNum: this.byuCount //商品数量是同步到计数框选中的数量
                 })
-                // 添加成功后就提示通过
+                //弹出提示,加入购物车成功 这个是框架提供的弹出框 $notify 这类带有$前缀的方法都是挂在Vue构造函数的原型中,所以所有的子组件都可以访问到这个方法
             this.$notify({
                 title: 'success',
                 message: '二货成功加入购物车',
@@ -278,19 +295,28 @@ export default {
     },
     watch: {
         $route(newVal, oldVale) {
+            // 点击右侧的商品列表,为了获取被点击商品的详情,在点击右侧商品列表时已把商品id放到路由里了,
+            // 所以每次点击商品列表时会改变路由的参数,此时使用侦听器(watch)侦听到路由的变化 就会触发这个函数,执行这里的代码
+            // 路由发生变化后重新调用获取商品详情的方法,在获取商品详情的方法里有获取当前 路由参数 的代码. 就能相应的请求到当前点击商品的详情了
             // 当商品的id修改后就重新调用获取商品和品论的数据
-            // 当路由发生变化后 修改图片的数组为空
+            // 当路由发生变化后 清除之前商品的图片,用来存放当前显示详情的商品的图片
             this.images.normal_size = []
             this.initInfo()
-            this.getdetail()
+                // 重新调用获取商品的评论
+                // this.getdetail()
         }
     }
 }
 </script>
 <style>
+/*图片设置为块级*/
+
 .tab-content img {
     display: block;
 }
+
+
+/*设置所有小图的*/
 
 .thumb-list img {
     width: 100px;

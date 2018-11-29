@@ -10,16 +10,16 @@
                         <a target="_blank" href="#"></a>
                     </div>
                     <div id="menu" class="right-box">
-                        <span style="display: none;">
-                        <a href="" class="">登录</a>
+                        <span v-show="$store.state.islogin==false">
+                        <router-link to="/login">登录</router-link>
                         <strong>|</strong>
                         <a href="" class="">注册</a>
                         <strong>|</strong>
                     </span>
-                        <span>
-                        <a href="" class="">会员中心</a>
+                        <span v-show="$store.state.islogin==true">
+                        <router-link to="/vipcontaien">会员中心</router-link>
                         <strong>|</strong>
-                       <a>退出</a>>
+                       <a @click="logout">退出</a>>
                       
                         <strong>|</strong>
                     </span>
@@ -109,13 +109,25 @@
                 </div>
             </div>
         </div>
-      
     </div>
 </template>
 <script>
 export default {
     name: 'app',
-
+    methods:{
+        logout(){
+            this.$axios.get('site/account/logout').then(res=>{
+                if(res.data.status===0){
+                    // 提示
+                    this.$Message.success(res.data.message)
+                    // 跳转到首页
+                    this.$router.push('/index')
+                    // 修改store中的是否登入字段
+                    this.$store.commit('changelogin',false)
+                }
+            })
+        }
+    }
 }
 </script>
 <style>
